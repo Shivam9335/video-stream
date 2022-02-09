@@ -1,26 +1,23 @@
 from cache.admins import admins
-from driver.veez import call_py
+from driver.veez import call_py, bot
 from pyrogram import Client, filters
-from driver.decorators import authorized_users_only
-from driver.filters import command, other_filters
+from driver.design.thumbnail import thumb
+from driver.design.chatname import CHAT_TITLE
 from driver.queues import QUEUE, clear_queue
+from driver.filters import command, other_filters
+from driver.decorators import authorized_users_only
 from driver.utils import skip_current_song, skip_item
-from config import BOT_USERNAME, GROUP_SUPPORT, IMG_3, UPDATES_CHANNEL
+from program.utils.inline import (
+    stream_markup,
+    close_mark,
+    back_mark,
+)
+from config import BOT_USERNAME, GROUP_SUPPORT, IMG_5, UPDATES_CHANNEL
 from pyrogram.types import (
     CallbackQuery,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
-)
-
-
-bttn = InlineKeyboardMarkup(
-    [[InlineKeyboardButton("🔙 Go Back", callback_data="cbmenu")]]
-)
-
-
-bcl = InlineKeyboardMarkup(
-    [[InlineKeyboardButton("🥀 Close", callback_data="cls")]]
 )
 
 
@@ -34,41 +31,38 @@ async def update_admin(client, message):
         new_admins.append(u.user.id)
     admins[message.chat.id] = new_admins
     await message.reply_text(
-        "🦋 **Admin list** has been **updated !**"
+        "✅ Bot **reloaded correctly !**\n✅ **Admin list** has **updated !**"
     )
 
 
 @Client.on_message(command(["skip", f"skip@{BOT_USERNAME}", "vskip"]) & other_filters)
 @authorized_users_only
-async def skip(client, m: Message):
-
-    keyboard = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton(
-                    text="•🥀 Mᴇɴᴜ", callback_data="cbmenu"
-                ),
-                InlineKeyboardButton(
-                    text="•🥀 Cʟᴏsᴇ", callback_data="cls"
-                ),
-            ]
-        ]
-    )
-
+async def skip(c: Client, m: Message):
+    await m.delete()
+    user_id = m.from_user.id
     chat_id = m.chat.id
     if len(m.command) < 2:
         op = await skip_current_song(chat_id)
         if op == 0:
-            await m.reply("🦋 nothing is currently playing")
+            await c.send_message(chat_id, "❌ nothing is currently playing")
         elif op == 1:
-            await m.reply("🦋 __Queues__ **is empty.**\n\n**• userbot leaving voice chat**")
+            await c.send_message(chat_id, "» There's no more music in queue to skip, userbot leaving video chat.")
         elif op == 2:
-            await m.reply("🗑️ **Clearing the Queues**\n\n**• userbot leaving voice chat**")
+            await c.send_message(chat_id, "🗑️ Clearing the **Queues**\n\n**• userbot** leaving video chat.")
         else:
-            await m.reply_photo(
-                photo=f"{IMG_3}",
-                caption=f"⏭ **Skipped to the next track.**\n\n🦋 **Name:** [{op[0]}]({op[1]})\n🦋 **Status:** `Playing`\n **🦋ʟᴜᴄᴋʏ ᴜꜱᴇʀ:** {m.from_user.mention()}",
-                reply_markup=keyboard,
+            buttons = stream_markup(user_id)
+            requester = f"[{m.from_user.first_name}](tg://user?id={m.from_user.id})"
+            thumbnail = f"{IMG_5}"
+            title = f"{op[0]}"
+            userid = m.from_user.id
+            gcname = m.chat.title
+            ctitle = await CHAT_TITLE(gcname)
+            image = await thumb(thumbnail, title, userid, ctitle)
+            await c.send_photo(
+                chat_id,
+                photo=image,
+                reply_markup=InlineKeyboardMarkup(buttons),
+                caption=f"⏭ **Skipped** to the next track.\n\n🗂 **Name:** [{op[0]}]({op[1]})\n💭 **Chat:** `{chat_id}`\n🧸 **Request by:** {requester}",
             )
     else:
         skip = m.text.split(None, 1)[1]
@@ -99,11 +93,11 @@ async def stop(client, m: Message):
         try:
             await call_py.leave_group_call(chat_id)
             clear_queue(chat_id)
-            await m.reply("**😕**")
+            await m.reply("✅ The userbot has disconnected from the video chat.")
         except Exception as e:
-            await m.reply(f"🚫 **what you want to play🧐:**\n\n`{e}`")
+            await m.reply(f"🚫 **error:**\n\n`{e}`")
     else:
-        await m.reply("🦋 **nothing in streaming**")
+        await m.reply("❌ **nothing is streaming**")
 
 
 @Client.on_message(
@@ -119,9 +113,9 @@ async def pause(client, m: Message):
                 "⏸ **Track paused.**\n\n• **To resume the stream, use the**\n» /resume command."
             )
         except Exception as e:
-            await m.reply(f"🚫 **what you want to play 🧐:**\n\n`{e}`")
+            await m.reply(f"🚫 **error:**\n\n`{e}`")
     else:
-        await m.reply("🦋 **nothing in streaming**")
+        await m.reply("❌ **nothing is streaming**")
 
 
 @Client.on_message(
@@ -137,9 +131,9 @@ async def resume(client, m: Message):
                 "▶️ **Track resumed.**\n\n• **To pause the stream, use the**\n» /pause command."
             )
         except Exception as e:
-            await m.reply(f"🚫 **what you want to play 🧐:**\n\n`{e}`")
+            await m.reply(f"🚫 **error:**\n\n`{e}`")
     else:
-        await m.reply("🦋 **nothing in streaming**")
+        await m.reply("❌ **nothing is streaming**")
 
 
 @Client.on_message(
@@ -155,9 +149,9 @@ async def mute(client, m: Message):
                 "🔇 **Userbot muted.**\n\n• **To unmute the userbot, use the**\n» /unmute command."
             )
         except Exception as e:
-            await m.reply(f"🚫 **what you want to play 🧐:**\n\n`{e}`")
+            await m.reply(f"🚫 **error:**\n\n`{e}`")
     else:
-        await m.reply("🦋 **nothing in streaming**")
+        await m.reply("❌ **nothing is streaming**")
 
 
 @Client.on_message(
@@ -173,108 +167,102 @@ async def unmute(client, m: Message):
                 "🔊 **Userbot unmuted.**\n\n• **To mute the userbot, use the**\n» /mute command."
             )
         except Exception as e:
-            await m.reply(f"🚫 **what you want to play 🧐:**\n\n`{e}`")
+            await m.reply(f"🚫 **error:**\n\n`{e}`")
     else:
-        await m.reply("🦋 **nothing in streaming**")
+        await m.reply("❌ **nothing is streaming**")
 
 
 @Client.on_callback_query(filters.regex("cbpause"))
 async def cbpause(_, query: CallbackQuery):
-    if query.message.sender_chat:
-        return await query.answer("you're an Anonymous Admin !\n\n» revert back to user account from admin rights.")
     a = await _.get_chat_member(query.message.chat.id, query.from_user.id)
     if not a.can_manage_voice_chats:
-        return await query.answer("💡 only admin with manage voice chats permission that can tap this button !", show_alert=True)
+        return await query.answer("💡 Only admin with manage video chat permission that can tap this button !", show_alert=True)
     chat_id = query.message.chat.id
     if chat_id in QUEUE:
         try:
             await call_py.pause_stream(chat_id)
+            await query.answer("streaming paused")
             await query.edit_message_text(
-                "⏸ the streaming has paused", reply_markup=bttn
+                "⏸ the streaming has paused", reply_markup=back_mark
             )
         except Exception as e:
-            await query.edit_message_text(f"🚫 **what you want to play 🧐:**\n\n`{e}`", reply_markup=bcl)
+            await query.edit_message_text(f"🚫 **error:**\n\n`{e}`", reply_markup=close_mark)
     else:
-        await query.answer("🦋 nothing is currently streaming", show_alert=True)
+        await query.answer("❌ nothing is currently streaming", show_alert=True)
 
 
 @Client.on_callback_query(filters.regex("cbresume"))
 async def cbresume(_, query: CallbackQuery):
-    if query.message.sender_chat:
-        return await query.answer("you're an Anonymous Admin !\n\n» revert back to user account from admin rights.")
     a = await _.get_chat_member(query.message.chat.id, query.from_user.id)
     if not a.can_manage_voice_chats:
-        return await query.answer("💡 only admin with manage voice chats permission that can tap this button !", show_alert=True)
+        return await query.answer("💡 Only admin with manage video chat permission that can tap this button !", show_alert=True)
     chat_id = query.message.chat.id
     if chat_id in QUEUE:
         try:
             await call_py.resume_stream(chat_id)
+            await query.answer("streaming resumed")
             await query.edit_message_text(
-                "▶️ the streaming has resumed", reply_markup=bttn
+                "▶️ the streaming has resumed", reply_markup=back_mark
             )
         except Exception as e:
-            await query.edit_message_text(f"🚫 **what you want to play 🧐:**\n\n`{e}`", reply_markup=bcl)
+            await query.edit_message_text(f"🚫 **error:**\n\n`{e}`", reply_markup=close_mark)
     else:
-        await query.answer("🦋 nothing is currently streaming", show_alert=True)
+        await query.answer("❌ nothing is currently streaming", show_alert=True)
 
 
 @Client.on_callback_query(filters.regex("cbstop"))
 async def cbstop(_, query: CallbackQuery):
-    if query.message.sender_chat:
-        return await query.answer("you're an Anonymous Admin !\n\n» revert back to user account from admin rights.")
     a = await _.get_chat_member(query.message.chat.id, query.from_user.id)
     if not a.can_manage_voice_chats:
-        return await query.answer("💡 only admin with manage voice chats permission that can tap this button !", show_alert=True)
+        return await query.answer("💡 Only admin with manage video chat permission that can tap this button !", show_alert=True)
     chat_id = query.message.chat.id
     if chat_id in QUEUE:
         try:
             await call_py.leave_group_call(chat_id)
             clear_queue(chat_id)
-            await query.edit_message_text("🦋 **this streaming has ended**", reply_markup=bcl)
+            await query.edit_message_text("✅ **this streaming has ended**", reply_markup=close_mark)
         except Exception as e:
-            await query.edit_message_text(f"🚫 **what you want to play 🧐:**\n\n`{e}`", reply_markup=bcl)
+            await query.edit_message_text(f"🚫 **error:**\n\n`{e}`", reply_markup=close_mark)
     else:
-        await query.answer("🦋 nothing is currently streaming", show_alert=True)
+        await query.answer("❌ nothing is currently streaming", show_alert=True)
 
 
 @Client.on_callback_query(filters.regex("cbmute"))
 async def cbmute(_, query: CallbackQuery):
-    if query.message.sender_chat:
-        return await query.answer("you're an Anonymous Admin !\n\n» revert back to user account from admin rights.")
     a = await _.get_chat_member(query.message.chat.id, query.from_user.id)
     if not a.can_manage_voice_chats:
-        return await query.answer("💡 only admin with manage voice chats permission that can tap this button !", show_alert=True)
+        return await query.answer("💡 Only admin with manage video chat permission that can tap this button !", show_alert=True)
     chat_id = query.message.chat.id
     if chat_id in QUEUE:
         try:
             await call_py.mute_stream(chat_id)
+            await query.answer("streaming muted")
             await query.edit_message_text(
-                "🔇 userbot succesfully muted", reply_markup=bttn
+                "🔇 userbot succesfully muted", reply_markup=back_mark
             )
         except Exception as e:
-            await query.edit_message_text(f"🚫 **what you want to play 🧐:**\n\n`{e}`", reply_markup=bcl)
+            await query.edit_message_text(f"🚫 **error:**\n\n`{e}`", reply_markup=close_mark)
     else:
-        await query.answer("🦋 nothing is currently streaming", show_alert=True)
+        await query.answer("❌ nothing is currently streaming", show_alert=True)
 
 
 @Client.on_callback_query(filters.regex("cbunmute"))
 async def cbunmute(_, query: CallbackQuery):
-    if query.message.sender_chat:
-        return await query.answer("you're an Anonymous Admin !\n\n» revert back to user account from admin rights.")
     a = await _.get_chat_member(query.message.chat.id, query.from_user.id)
     if not a.can_manage_voice_chats:
-        return await query.answer("💡 only admin with manage voice chats permission that can tap this button !", show_alert=True)
+        return await query.answer("💡 Only admin with manage video chat permission that can tap this button !", show_alert=True)
     chat_id = query.message.chat.id
     if chat_id in QUEUE:
         try:
             await call_py.unmute_stream(chat_id)
+            await query.answer("streaming unmuted")
             await query.edit_message_text(
-                "🔊 userbot succesfully unmuted", reply_markup=bttn
+                "🔊 userbot succesfully unmuted", reply_markup=back_mark
             )
         except Exception as e:
-            await query.edit_message_text(f"🚫 **what you want to play 🧐:**\n\n`{e}`", reply_markup=bcl)
+            await query.edit_message_text(f"🚫 **error:**\n\n`{e}`", reply_markup=close_mark)
     else:
-        await query.answer("🦋 nothing is currently streaming", show_alert=True)
+        await query.answer("❌ nothing is currently streaming", show_alert=True)
 
 
 @Client.on_message(
@@ -291,6 +279,6 @@ async def change_volume(client, m: Message):
                 f"✅ **volume set to** `{range}`%"
             )
         except Exception as e:
-            await m.reply(f"🚫 **what you want to play 🧐:**\n\n`{e}`")
+            await m.reply(f"🚫 **error:**\n\n`{e}`")
     else:
-        await m.reply("🦋 **nothing in streaming**")
+        await m.reply("❌ **nothing in streaming**")
