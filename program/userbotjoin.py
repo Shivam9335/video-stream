@@ -1,61 +1,48 @@
 import asyncio
-from config import BOT_USERNAME, SUDO_USERS
-from driver.decorators import authorized_users_only, sudo_users_only, errors
-from driver.filters import command, other_filters
-from driver.veez import user as USER
+from driver.veez import user
+from pyrogram.types import Message
 from pyrogram import Client, filters
-from pyrogram.errors import UserAlreadyParticipant
+from config import BOT_USERNAME, SUDO_USERS
+from driver.filters import command, other_filters
+from pyrogram.errors import UserAlreadyParticipant, UserNotParticipant
+from driver.decorators import authorized_users_only, sudo_users_only
 
 
 @Client.on_message(
-    command(["userbotjoin", f"userbotjoin@{BOT_USERNAME}"]) & ~filters.private & ~filters.bot
+    command(["userbotjoin", f"userbotjoin@{BOT_USERNAME}"]) & other_filters
 )
 @authorized_users_only
-@errors
-async def join_group(client, message):
-    chid = message.chat.id
+async def join_chat(c: Client, m: Message):
+    chat_id = m.chat.id
     try:
-        invitelink = await client.export_chat_invite_link(chid)
-    except BaseException:
-        await message.reply_text(
-            "• **i'm not have permission:**\n\n» ❌ __Add Users__",
-        )
-        return
-
-    try:
-        user = await USER.get_me()
-    except BaseException:
-        user.first_name = "music assistant"
-
-    try:
-        await USER.join_chat(invitelink)
+        invitelink = await c.export_chat_invite_link(chat_id)
+        if invitelink.startswith("https://t.me/+"):
+            invitelink = invitelink.replace(
+                "https://t.me/+", "https://t.me/joinchat/"
+            )
+            await user.join_chat(invitelink)
+            return await user.send_message(chat_id, "✅ userbot joined chat")
     except UserAlreadyParticipant:
-        pass
-    except Exception as e:
-        print(e)
-        await message.reply_text(
-            f"🛑 Flood Wait Error 🛑 \n\n**userbot couldn't join your group due to heavy join requests for userbot**"
-            "\n\n**or add assistant manually to your Group and try again**",
-        )
-        return
-    await message.reply_text(
-        f"✅ **userbot succesfully entered chat**",
-    )
+        return await user.send_message(chat_id, "✅ userbot already in chat")
 
 
-@Client.on_message(command(["userbotleave",
-                            f"leave@{BOT_USERNAME}"]) & filters.group & ~filters.edited)
+@Client.on_message(
+    command(["userbotleave", f"userbotleave@{BOT_USERNAME}"]) & other_filters
+)
 @authorized_users_only
-async def leave_one(client, message):
+async def leave_chat(_, m: Message):
+    chat_id = m.chat.id
     try:
-        await USER.send_message(message.chat.id, "✅ userbot successfully left chat")
-        await USER.leave_chat(message.chat.id)
-    except BaseException:
-        await message.reply_text(
-            "❌ **userbot couldn't leave your group, may be floodwaits.**\n\n**» or manually kick userbot from your group**"
+        await user.leave_chat(chat_id)
+        return await _.send_message(
+            chat_id,
+            "✅ userbot leaved chat",
         )
-
-        return
+    except UserNotParticipant:
+        return await _.send_message(
+            chat_id,
+            "❌ userbot already leave chat",
+        )
 
 
 @Client.on_message(command(["leaveall", f"leaveall@{BOT_USERNAME}"]))
@@ -66,20 +53,34 @@ async def leave_all(client, message):
 
     left = 0
     failed = 0
-    lol = await message.reply("🔄 **userbot** leaving all chats !")
-    async for dialog in USER.iter_dialogs():
+    
+    msg = await message.reply("🔄 Userbot leaving all Group !")
+    async for dialog in user.iter_dialogs():
         try:
-            await USER.leave_chat(dialog.chat.id)
+            await user.leave_chat(dialog.chat.id)
             left += 1
-            await lol.edit(
-                f"Userbot leaving all group...\n\nLeft: {left} chats.\nFailed: {failed} chats."
+            await msg.edit(
+                f"Userbot leaving all Group...\n\nLeft: {left} chats.\nFailed: {failed} chats."
             )
         except BaseException:
             failed += 1
-            await lol.edit(
+            await msg.edit(
                 f"Userbot leaving...\n\nLeft: {left} chats.\nFailed: {failed} chats."
             )
         await asyncio.sleep(0.7)
+    await msg.delete()
     await client.send_message(
         message.chat.id, f"✅ Left from: {left} chats.\n❌ Failed in: {failed} chats."
     )
+
+
+@Client.on_message(filters.left_chat_member)
+async def ubot_leave(c: Client, m: Message):
+#    ass_id = (await user.get_me()).id
+    bot_id = (await c.get_me()).id
+    chat_id = m.chat.id
+    left_member = m.left_chat_member
+    if left_member.id == bot_id:
+        await user.leave_chat(chat_id)
+#    elif left_member.id == ass_id:
+#        await c.leave_chat(chat_id)
