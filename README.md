@@ -78,7 +78,7 @@ pip3 install -U pip
 curl -sL https://deb.nodesource.com/setup_16.x | bash -
 sudo apt-get install -y nodejs
 npm i -g npm
-git clone https://github.com/luckyboy701/video-stream # clone the repo.
+git clone https://github.com/shivam9335/video-stream # clone the repo.
 cd video-stream
 pip3 install -U -r requirements.txt
 cp example.env .env # use vim to edit ENVs
@@ -90,7 +90,7 @@ python3 main.py # run the bot.
 
 # Credits 💖
 
-- [Lucky](https://github.com/luckyboy701) ``Dev``
+- [shukla](https://github.com/shivam9335) ``Dev``
 - [Zxce3](https://github.com/Zxce3) ``Dev``
 - [DoellBarr](https://github.com/DoellBarr) ``Dev``
 - [tofikdn](https://github.com/tofikdn) ``Dev``
