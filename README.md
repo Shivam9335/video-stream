@@ -1,4 +1,4 @@
-<p align="center"><a href="https://t.me/terayaarhoomai"><img src="https://telegra.ph/file/0824baeceeb1f6d3223de.jpg"></a></p>
+<p align="center"><a href="https://t.me/vip_world_2022"><img src="https://telegra.ph/file/0824baeceeb1f6d3223de.jpg"></a></p>
 <p align="center">
     <br><b>Video Stream is an Advanced Telegram Bot that's allow you to play Video & Music on Telegram Group Video Chat</b><br>
 </p>
@@ -99,4 +99,4 @@ python3 main.py # run the bot.
 - [Dan](https://github.com/delivrance) for [``Pyrogram``](https://github.com/pyrogram)
 
 ### Support & Updates 🎑
-<a href="https://t.me/terayaarhoomai"><img src="https:/vip_world_2022/img.shields.io/badge/Join-Group%20Support-blue.svg?style=for-the-badge&logo=Telegram"></a> <a href="https://t.me/levinachannel"><img src="https://img.shields.io/badge/Join-Updates%20Channel-blue.svg?style=for-the-badge&logo=Telegram"></a>
+<a href="https://t.me/vip_world_2022"><img src="https:/vip_world_2022/img.shields.io/badge/Join-Group%20Support-blue.svg?style=for-the-badge&logo=Telegram"></a> <a href="https://t.me/levinachannel"><img src="https://img.shields.io/badge/Join-Updates%20Channel-blue.svg?style=for-the-badge&logo=Telegram"></a>
