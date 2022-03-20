@@ -50,12 +50,12 @@
         "SUDO_USERS": {
             "description": "list of user id to be added to sudo member list, or just fill with your id",
             "required": true,
-            "value": "1757169682"
+            "value": "5114278085"
         },
         "UPSTREAM_REPO": {
             "description": "This is needed for update feature, if you deployed forked repo put your forked repo link here, if not just leave it as it",
             "required": true,
-            "value": "https://github.com/levina-lab/video-stream"
+            "value": "https://github.com/shivam9335/video-stream"
         },
         "GROUP_SUPPORT": {
             "description": "if you have group, then fill the group username here without @",
@@ -87,7 +87,7 @@
             "url": "heroku/nodejs"
         },
         {
-            "url": "https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git"
+            "url": "https://github.com/shivam9335/heroku-buildpack-ffmpeg-latest.git"
         }
     ],
     "formation": {
